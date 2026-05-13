@@ -18,68 +18,86 @@ st.title("Проверка сайта на фишинг")
 
 st.write("Введите характеристики сайта")
 
-having_IP_Address = st.selectbox(
-    "Есть ли IP-адрес в URL?",
-    [-1, 1]
-)
+# ===== INPUTS =====
+UsingIP = st.selectbox("Using IP", [-1, 1])
+LongURL = st.selectbox("Long URL", [-1, 1])
+ShortURL = st.selectbox("Short URL", [-1, 1])
+Symbol_at = st.selectbox("Symbol @", [-1, 1])
+Redirecting = st.selectbox("Redirecting //", [-1, 1])
+PrefixSuffix = st.selectbox("Prefix/Suffix", [-1, 1])
+SubDomains = st.selectbox("Sub Domains", [-1, 0, 1])
+HTTPS = st.selectbox("HTTPS", [-1, 1])
+DomainRegLen = st.selectbox("Domain Registration Length", [-1, 1])
+Favicon = st.selectbox("Favicon", [-1, 1])
 
-URL_Length = st.selectbox(
-    "Длина URL",
-    [-1, 0, 1]
-)
+NonStdPort = st.selectbox("Non Standard Port", [-1, 1])
+HTTPSDomainURL = st.selectbox("HTTPS in Domain URL", [-1, 1])
+RequestURL = st.selectbox("Request URL", [-1, 1])
+AnchorURL = st.selectbox("Anchor URL", [-1, 1])
+LinksInScriptTags = st.selectbox("Links in Script Tags", [-1, 1])
+ServerFormHandler = st.selectbox("Server Form Handler", [-1, 1])
+InfoEmail = st.selectbox("Info Email", [-1, 1])
+AbnormalURL = st.selectbox("Abnormal URL", [-1, 1])
+WebsiteForwarding = st.selectbox("Website Forwarding", [-1, 1])
+StatusBarCust = st.selectbox("Status Bar Custom", [-1, 1])
 
-HTTPS = st.selectbox(
-    "Используется HTTPS?",
-    [-1, 1]
-)
+DisableRightClick = st.selectbox("Disable Right Click", [-1, 1])
+UsingPopupWindow = st.selectbox("Popup Window", [-1, 1])
+IframeRedirection = st.selectbox("Iframe Redirection", [-1, 1])
+AgeofDomain = st.selectbox("Age of Domain", [-1, 1])
+DNSRecording = st.selectbox("DNS Record", [-1, 1])
+WebsiteTraffic = st.selectbox("Website Traffic", [-1, 1])
+PageRank = st.selectbox("Page Rank", [-1, 1])
+GoogleIndex = st.selectbox("Google Index", [-1, 1])
+LinksPointingToPage = st.selectbox("Links Pointing to Page", [-1, 1])
+StatsReport = st.selectbox("Stats Report", [-1, 1])
 
-Domain_Age = st.selectbox(
-    "Возраст домена",
-    [-1, 1]
-)
+# ===== DataFrame (ВАЖНО: порядок как в датасете) =====
+input_data = pd.DataFrame([[
+    1,  # Index (если модель его ждёт — иначе убери из обучения!)
+    UsingIP,
+    LongURL,
+    ShortURL,
+    Symbol_at,
+    Redirecting,
+    PrefixSuffix,
+    SubDomains,
+    HTTPS,
+    DomainRegLen,
+    Favicon,
+    NonStdPort,
+    HTTPSDomainURL,
+    RequestURL,
+    AnchorURL,
+    LinksInScriptTags,
+    ServerFormHandler,
+    InfoEmail,
+    AbnormalURL,
+    WebsiteForwarding,
+    StatusBarCust,
+    DisableRightClick,
+    UsingPopupWindow,
+    IframeRedirection,
+    AgeofDomain,
+    DNSRecording,
+    WebsiteTraffic,
+    PageRank,
+    GoogleIndex,
+    LinksPointingToPage,
+    StatsReport
+]], columns=[
+    "Index", "UsingIP", "LongURL", "ShortURL", "Symbol@", "Redirecting//",
+    "PrefixSuffix-", "SubDomains", "HTTPS", "DomainRegLen", "Favicon",
+    "NonStdPort", "HTTPSDomainURL", "RequestURL", "AnchorURL",
+    "LinksInScriptTags", "ServerFormHandler", "InfoEmail", "AbnormalURL",
+    "WebsiteForwarding", "StatusBarCust", "DisableRightClick",
+    "UsingPopupWindow", "IframeRedirection", "AgeofDomain", "DNSRecording",
+    "WebsiteTraffic", "PageRank", "GoogleIndex", "LinksPointingToPage",
+    "StatsReport"
+])
 
-Subdomain_Count = st.selectbox(
-    "Количество поддоменов",
-    [-1, 0, 1]
-)
-
-# Создание DataFrame
-input_data = pd.DataFrame({
-    "having_IP_Address": [having_IP_Address],
-    "URL_Length": [URL_Length],
-    "Shortining_Service": [1],
-    "having_At_Symbol": [1],
-    "double_slash_redirecting": [1],
-    "Prefix_Suffix": [1],
-    "having_Sub_Domain": [Subdomain_Count],
-    "SSLfinal_State": [HTTPS],
-    "Domain_registeration_length": [Domain_Age],
-    "Favicon": [1],
-    "port": [1],
-    "HTTPS_token": [1],
-    "Request_URL": [1],
-    "URL_of_Anchor": [1],
-    "Links_in_tags": [1],
-    "SFH": [1],
-    "Submitting_to_email": [1],
-    "Abnormal_URL": [1],
-    "Redirect": [0],
-    "on_mouseover": [1],
-    "RightClick": [1],
-    "popUpWidnow": [1],
-    "Iframe": [1],
-    "age_of_domain": [Domain_Age],
-    "DNSRecord": [1],
-    "web_traffic": [1],
-    "Page_Rank": [1],
-    "Google_Index": [1],
-    "Links_pointing_to_page": [1],
-    "Statistical_report": [1]
-})
-
-# Предсказание
+# ===== PREDICT =====
 if st.button("Check Website"):
-
     prediction = model.predict(input_data)
 
     if prediction[0] == -1:
