@@ -11,107 +11,188 @@ import streamlit as st
 import pandas as pd
 import joblib
 
-# Загрузка модели
+# ===== MODEL =====
 model = joblib.load("Фишинговая.pkl")
 
-st.title("Проверка сайта на фишинг")
+st.title("Phishing Website Detection (Advanced)")
 
-st.write("Введите характеристики сайта")
+# ===== SCENARIOS =====
+scenario = st.selectbox(
+    "Выберите сценарий",
+    ["Custom", "Safe Website (Google-like)", "Phishing Website (Fake PayPal)", "Medium Risk Website"]
+)
 
-# ===== ФУНКЦИЯ ПЕРЕВОДА ДА/НЕТ В -1/1 =====
-def yes_no(label):
-    return st.selectbox(label, ["Нет", "Да"])
+# ===== DEFAULT VALUES =====
+defaults = {
+    "Safe Website (Google-like)": {
+        "UsingIP": 1,
+        "LongURL": 1,
+        "ShortURL": 1,
+        "Symbol@": 1,
+        "Redirecting//": 1,
+        "PrefixSuffix-": 1,
+        "SubDomains": 1,
+        "HTTPS": 1,
+        "DomainRegLen": 1,
+        "Favicon": 1,
+        "NonStdPort": 1,
+        "HTTPSDomainURL": 1,
+        "RequestURL": 1,
+        "AnchorURL": 1,
+        "LinksInScriptTags": 1,
+        "ServerFormHandler": 1,
+        "InfoEmail": 1,
+        "AbnormalURL": 1,
+        "WebsiteForwarding": 1,
+        "StatusBarCust": 1,
+        "DisableRightClick": 1,
+        "UsingPopupWindow": 1,
+        "IframeRedirection": 1,
+        "AgeofDomain": 1,
+        "DNSRecording": 1,
+        "WebsiteTraffic": 1,
+        "PageRank": 1,
+        "GoogleIndex": 1,
+        "LinksPointingToPage": 1,
+        "StatsReport": 1,
+    },
 
-def encode(value):
-    return 1 if value == "Да" else -1
+    "Phishing Website (Fake PayPal)": {
+        "UsingIP": -1,
+        "LongURL": -1,
+        "ShortURL": -1,
+        "Symbol@": -1,
+        "Redirecting//": -1,
+        "PrefixSuffix-": -1,
+        "SubDomains": -1,
+        "HTTPS": 1,
+        "DomainRegLen": -1,
+        "Favicon": -1,
+        "NonStdPort": -1,
+        "HTTPSDomainURL": -1,
+        "RequestURL": -1,
+        "AnchorURL": -1,
+        "LinksInScriptTags": -1,
+        "ServerFormHandler": -1,
+        "InfoEmail": -1,
+        "AbnormalURL": -1,
+        "WebsiteForwarding": -1,
+        "StatusBarCust": -1,
+        "DisableRightClick": -1,
+        "UsingPopupWindow": -1,
+        "IframeRedirection": -1,
+        "AgeofDomain": -1,
+        "DNSRecording": -1,
+        "WebsiteTraffic": -1,
+        "PageRank": -1,
+        "GoogleIndex": -1,
+        "LinksPointingToPage": -1,
+        "StatsReport": -1,
+    },
 
+    "Medium Risk Website": {
+        "UsingIP": 1,
+        "LongURL": 0,
+        "ShortURL": 1,
+        "Symbol@": 1,
+        "Redirecting//": 0,
+        "PrefixSuffix-": 0,
+        "SubDomains": 0,
+        "HTTPS": 1,
+        "DomainRegLen": 0,
+        "Favicon": 1,
+        "NonStdPort": 1,
+        "HTTPSDomainURL": 1,
+        "RequestURL": 0,
+        "AnchorURL": 0,
+        "LinksInScriptTags": 0,
+        "ServerFormHandler": 1,
+        "InfoEmail": 0,
+        "AbnormalURL": 0,
+        "WebsiteForwarding": 0,
+        "StatusBarCust": 1,
+        "DisableRightClick": 1,
+        "UsingPopupWindow": 0,
+        "IframeRedirection": 0,
+        "AgeofDomain": 0,
+        "DNSRecording": 1,
+        "WebsiteTraffic": 0,
+        "PageRank": 0,
+        "GoogleIndex": 1,
+        "LinksPointingToPage": 0,
+        "StatsReport": 0,
+    }
+}
 
-# ===== INPUTS (РУССКИЙ ИНТЕРФЕЙС) =====
-UsingIP = encode(yes_no("Есть ли IP-адрес в URL?"))
-LongURL = encode(yes_no("Длинный URL?"))
-ShortURL = encode(yes_no("Используется сокращённый URL?"))
-Symbol_at = encode(yes_no("Есть символ @ в ссылке?"))
-Redirecting = encode(yes_no("Есть редиректы (//)?"))
-PrefixSuffix = encode(yes_no("Есть дефис в домене?"))
-SubDomains = st.selectbox("Количество поддоменов", [-1, 0, 1])
-HTTPS = encode(yes_no("Используется HTTPS?"))
-DomainRegLen = encode(yes_no("Короткий срок регистрации домена?"))
-Favicon = encode(yes_no("Подозрительный favicon?"))
+# ===== LOAD VALUES =====
+if scenario != "Custom":
+    values = defaults[scenario]
+else:
+    values = {}
 
-NonStdPort = encode(yes_no("Используется нестандартный порт?"))
-HTTPSDomainURL = encode(yes_no("HTTPS в домене?"))
-RequestURL = encode(yes_no("Запросы идут на внешний URL?"))
-AnchorURL = encode(yes_no("Подозрительные ссылки (anchor)?"))
-LinksInScriptTags = encode(yes_no("Подозрительные скрипты?"))
-ServerFormHandler = encode(yes_no("Подозрительный обработчик формы?"))
-InfoEmail = encode(yes_no("Есть email в URL?"))
-AbnormalURL = encode(yes_no("Аномальный URL?"))
-WebsiteForwarding = encode(yes_no("Перенаправления?"))
-StatusBarCust = encode(yes_no("Изменение статус-бара?"))
+# ===== UI INPUT FUNCTION =====
+def feature(name, default=1):
+    return st.selectbox(name, [-1, 0, 1], index=[-1,0,1].index(values.get(name, default)))
 
-DisableRightClick = encode(yes_no("Отключён правый клик?"))
-UsingPopupWindow = encode(yes_no("Используются pop-up окна?"))
-IframeRedirection = encode(yes_no("Используется iframe редирект?"))
-AgeofDomain = encode(yes_no("Домен молодой?"))
-DNSRecording = encode(yes_no("Проблемы с DNS?"))
-WebsiteTraffic = encode(yes_no("Низкий трафик сайта?"))
-PageRank = encode(yes_no("Низкий PageRank?"))
-GoogleIndex = encode(yes_no("Сайт не в Google?"))
-LinksPointingToPage = encode(yes_no("Мало входящих ссылок?"))
-StatsReport = encode(yes_no("Есть подозрения по статистике?"))
+st.subheader("Признаки сайта (-1 = плохо, 0 = нейтрально, 1 = хорошо)")
 
+UsingIP = feature("UsingIP")
+LongURL = feature("LongURL")
+ShortURL = feature("ShortURL")
+Symbol_at = feature("Symbol@")
+Redirecting = feature("Redirecting//")
+PrefixSuffix = feature("PrefixSuffix-")
+SubDomains = feature("SubDomains")
+HTTPS = feature("HTTPS")
+DomainRegLen = feature("DomainRegLen")
+Favicon = feature("Favicon")
+
+NonStdPort = feature("NonStdPort")
+HTTPSDomainURL = feature("HTTPSDomainURL")
+RequestURL = feature("RequestURL")
+AnchorURL = feature("AnchorURL")
+LinksInScriptTags = feature("LinksInScriptTags")
+ServerFormHandler = feature("ServerFormHandler")
+InfoEmail = feature("InfoEmail")
+AbnormalURL = feature("AbnormalURL")
+WebsiteForwarding = feature("WebsiteForwarding")
+StatusBarCust = feature("StatusBarCust")
+
+DisableRightClick = feature("DisableRightClick")
+UsingPopupWindow = feature("UsingPopupWindow")
+IframeRedirection = feature("IframeRedirection")
+AgeofDomain = feature("AgeofDomain")
+DNSRecording = feature("DNSRecording")
+WebsiteTraffic = feature("WebsiteTraffic")
+PageRank = feature("PageRank")
+GoogleIndex = feature("GoogleIndex")
+LinksPointingToPage = feature("LinksPointingToPage")
+StatsReport = feature("StatsReport")
 
 # ===== DATAFRAME =====
 input_data = pd.DataFrame([[
-    1,
-    UsingIP,
-    LongURL,
-    ShortURL,
-    Symbol_at,
-    Redirecting,
-    PrefixSuffix,
-    SubDomains,
-    HTTPS,
-    DomainRegLen,
-    Favicon,
-    NonStdPort,
-    HTTPSDomainURL,
-    RequestURL,
-    AnchorURL,
-    LinksInScriptTags,
-    ServerFormHandler,
-    InfoEmail,
-    AbnormalURL,
-    WebsiteForwarding,
-    StatusBarCust,
-    DisableRightClick,
-    UsingPopupWindow,
-    IframeRedirection,
-    AgeofDomain,
-    DNSRecording,
-    WebsiteTraffic,
-    PageRank,
-    GoogleIndex,
-    LinksPointingToPage,
+    1, UsingIP, LongURL, ShortURL, Symbol_at, Redirecting,
+    PrefixSuffix, SubDomains, HTTPS, DomainRegLen, Favicon,
+    NonStdPort, HTTPSDomainURL, RequestURL, AnchorURL,
+    LinksInScriptTags, ServerFormHandler, InfoEmail, AbnormalURL,
+    WebsiteForwarding, StatusBarCust, DisableRightClick,
+    UsingPopupWindow, IframeRedirection, AgeofDomain, DNSRecording,
+    WebsiteTraffic, PageRank, GoogleIndex, LinksPointingToPage,
     StatsReport
-]], columns=[
-    "Index", "UsingIP", "LongURL", "ShortURL", "Symbol@", "Redirecting//",
-    "PrefixSuffix-", "SubDomains", "HTTPS", "DomainRegLen", "Favicon",
-    "NonStdPort", "HTTPSDomainURL", "RequestURL", "AnchorURL",
-    "LinksInScriptTags", "ServerFormHandler", "InfoEmail", "AbnormalURL",
-    "WebsiteForwarding", "StatusBarCust", "DisableRightClick",
-    "UsingPopupWindow", "IframeRedirection", "AgeofDomain", "DNSRecording",
-    "WebsiteTraffic", "PageRank", "GoogleIndex", "LinksPointingToPage",
-    "StatsReport"
-])
+]], columns=model.feature_names_in_)
 
-
-# ===== PREDICT =====
+# ===== PREDICTION =====
 if st.button("Проверить сайт"):
 
-    prediction = model.predict(input_data)
+    pred = model.predict(input_data)[0]
+    proba = model.predict_proba(input_data)[0]
 
-    if prediction[0] == -1:
-        st.error("Обнаружен фишинговый сайт")
+    st.subheader("Результат")
+
+    if pred == -1:
+        st.error("Фишинговый сайт")
     else:
-        st.success("Сайт выглядит безопасным")
+        st.success("Безопасный сайт")
+
+    st.write(f"Вероятность безопасного сайта: {proba[1]*100:.2f}%")
+    st.write(f"Вероятность фишинга: {proba[0]*100:.2f}%")
