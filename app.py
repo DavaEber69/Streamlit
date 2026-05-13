@@ -11,167 +11,182 @@ import streamlit as st
 import pandas as pd
 import joblib
 
-# ===== MODEL =====
 model = joblib.load("Фишинговая.pkl")
 
-st.title("Phishing Website Detection (Advanced)")
+st.title("Проверка сайта на фишинг")
 
-# ===== SCENARIOS =====
-scenario = st.selectbox(
-    "Выберите сценарий",
-    ["Custom", "Safe Website (Google-like)", "Phishing Website (Fake PayPal)", "Medium Risk Website"]
+st.write("Оцените характеристики сайта")
+
+# ===== ПРЕОБРАЗОВАНИЕ ОТВЕТОВ =====
+def map_choice(choice):
+    return {
+        "Безопасно": 1,
+        "Нормально": 0,
+        "Подозрительно": -1
+    }[choice]
+
+
+def safe_input(label, options):
+    return map_choice(st.selectbox(label, options))
+
+
+# ===== ПРИЗНАКИ (РУССКИЕ + СМЫСЛОВЫЕ ВАРИАНТЫ) =====
+
+UsingIP = safe_input(
+    "Используется IP-адрес вместо домена?",
+    ["Безопасно (домен)", "Нормально", "Подозрительно (IP в URL)"]
 )
 
-# ===== DEFAULT VALUES =====
-defaults = {
-    "Safe Website (Google-like)": {
-        "UsingIP": 1,
-        "LongURL": 1,
-        "ShortURL": 1,
-        "Symbol@": 1,
-        "Redirecting//": 1,
-        "PrefixSuffix-": 1,
-        "SubDomains": 1,
-        "HTTPS": 1,
-        "DomainRegLen": 1,
-        "Favicon": 1,
-        "NonStdPort": 1,
-        "HTTPSDomainURL": 1,
-        "RequestURL": 1,
-        "AnchorURL": 1,
-        "LinksInScriptTags": 1,
-        "ServerFormHandler": 1,
-        "InfoEmail": 1,
-        "AbnormalURL": 1,
-        "WebsiteForwarding": 1,
-        "StatusBarCust": 1,
-        "DisableRightClick": 1,
-        "UsingPopupWindow": 1,
-        "IframeRedirection": 1,
-        "AgeofDomain": 1,
-        "DNSRecording": 1,
-        "WebsiteTraffic": 1,
-        "PageRank": 1,
-        "GoogleIndex": 1,
-        "LinksPointingToPage": 1,
-        "StatsReport": 1,
-    },
+LongURL = safe_input(
+    "Длина URL",
+    ["Короткий и читаемый", "Средний", "Слишком длинный и сложный"]
+)
 
-    "Phishing Website (Fake PayPal)": {
-        "UsingIP": -1,
-        "LongURL": -1,
-        "ShortURL": -1,
-        "Symbol@": -1,
-        "Redirecting//": -1,
-        "PrefixSuffix-": -1,
-        "SubDomains": -1,
-        "HTTPS": 1,
-        "DomainRegLen": -1,
-        "Favicon": -1,
-        "NonStdPort": -1,
-        "HTTPSDomainURL": -1,
-        "RequestURL": -1,
-        "AnchorURL": -1,
-        "LinksInScriptTags": -1,
-        "ServerFormHandler": -1,
-        "InfoEmail": -1,
-        "AbnormalURL": -1,
-        "WebsiteForwarding": -1,
-        "StatusBarCust": -1,
-        "DisableRightClick": -1,
-        "UsingPopupWindow": -1,
-        "IframeRedirection": -1,
-        "AgeofDomain": -1,
-        "DNSRecording": -1,
-        "WebsiteTraffic": -1,
-        "PageRank": -1,
-        "GoogleIndex": -1,
-        "LinksPointingToPage": -1,
-        "StatsReport": -1,
-    },
+ShortURL = safe_input(
+    "Используется сокращённая ссылка?",
+    ["Нет", "Иногда", "Да (подозрительно)"]
+)
 
-    "Medium Risk Website": {
-        "UsingIP": 1,
-        "LongURL": 0,
-        "ShortURL": 1,
-        "Symbol@": 1,
-        "Redirecting//": 0,
-        "PrefixSuffix-": 0,
-        "SubDomains": 0,
-        "HTTPS": 1,
-        "DomainRegLen": 0,
-        "Favicon": 1,
-        "NonStdPort": 1,
-        "HTTPSDomainURL": 1,
-        "RequestURL": 0,
-        "AnchorURL": 0,
-        "LinksInScriptTags": 0,
-        "ServerFormHandler": 1,
-        "InfoEmail": 0,
-        "AbnormalURL": 0,
-        "WebsiteForwarding": 0,
-        "StatusBarCust": 1,
-        "DisableRightClick": 1,
-        "UsingPopupWindow": 0,
-        "IframeRedirection": 0,
-        "AgeofDomain": 0,
-        "DNSRecording": 1,
-        "WebsiteTraffic": 0,
-        "PageRank": 0,
-        "GoogleIndex": 1,
-        "LinksPointingToPage": 0,
-        "StatsReport": 0,
-    }
-}
+Symbol_at = safe_input(
+    "Есть символ @ в ссылке?",
+    ["Нет", "Редко", "Да (опасно)"]
+)
 
-# ===== LOAD VALUES =====
-if scenario != "Custom":
-    values = defaults[scenario]
-else:
-    values = {}
+Redirecting = safe_input(
+    "Есть скрытые редиректы (//)?",
+    ["Нет", "Иногда", "Да"]
+)
 
-# ===== UI INPUT FUNCTION =====
-def feature(name, default=1):
-    return st.selectbox(name, [-1, 0, 1], index=[-1,0,1].index(values.get(name, default)))
+PrefixSuffix = safe_input(
+    "Есть дефисы в домене",
+    ["Нет", "Один дефис", "Много дефисов (подозрительно)"]
+)
 
-st.subheader("Признаки сайта (-1 = плохо, 0 = нейтрально, 1 = хорошо)")
+SubDomains = safe_input(
+    "Количество поддоменов",
+    ["Один домен", "2-3 поддомена", "Слишком много поддоменов"]
+)
 
-UsingIP = feature("UsingIP")
-LongURL = feature("LongURL")
-ShortURL = feature("ShortURL")
-Symbol_at = feature("Symbol@")
-Redirecting = feature("Redirecting//")
-PrefixSuffix = feature("PrefixSuffix-")
-SubDomains = feature("SubDomains")
-HTTPS = feature("HTTPS")
-DomainRegLen = feature("DomainRegLen")
-Favicon = feature("Favicon")
+HTTPS = safe_input(
+    "Используется HTTPS",
+    ["Да, защищённый", "Частично", "Нет HTTPS"]
+)
 
-NonStdPort = feature("NonStdPort")
-HTTPSDomainURL = feature("HTTPSDomainURL")
-RequestURL = feature("RequestURL")
-AnchorURL = feature("AnchorURL")
-LinksInScriptTags = feature("LinksInScriptTags")
-ServerFormHandler = feature("ServerFormHandler")
-InfoEmail = feature("InfoEmail")
-AbnormalURL = feature("AbnormalURL")
-WebsiteForwarding = feature("WebsiteForwarding")
-StatusBarCust = feature("StatusBarCust")
+DomainRegLen = safe_input(
+    "Срок регистрации домена",
+    ["Долгий срок", "Средний", "Короткий (подозрительно)"]
+)
 
-DisableRightClick = feature("DisableRightClick")
-UsingPopupWindow = feature("UsingPopupWindow")
-IframeRedirection = feature("IframeRedirection")
-AgeofDomain = feature("AgeofDomain")
-DNSRecording = feature("DNSRecording")
-WebsiteTraffic = feature("WebsiteTraffic")
-PageRank = feature("PageRank")
-GoogleIndex = feature("GoogleIndex")
-LinksPointingToPage = feature("LinksPointingToPage")
-StatsReport = feature("StatsReport")
+Favicon = safe_input(
+    "Favicon (иконка сайта)",
+    ["Оригинальный", "Необычный", "Поддельный/отсутствует"]
+)
+
+NonStdPort = safe_input(
+    "Нестандартный порт",
+    ["Нет", "Редко", "Да"]
+)
+
+HTTPSDomainURL = safe_input(
+    "HTTPS в домене",
+    ["Корректный", "Странный", "Подозрительный"]
+)
+
+RequestURL = safe_input(
+    "Внешние запросы",
+    ["Только свой домен", "Смешанные", "Много внешних запросов"]
+)
+
+AnchorURL = safe_input(
+    "Ссылки на странице",
+    ["Нормальные", "Частично подозрительные", "Много подозрительных"]
+)
+
+LinksInScriptTags = safe_input(
+    "Скрипты на сайте",
+    ["Чистые", "Смешанные", "Подозрительные"]
+)
+
+ServerFormHandler = safe_input(
+    "Формы отправки данных",
+    ["Безопасные", "Нейтральные", "Подозрительные"]
+)
+
+InfoEmail = safe_input(
+    "Email на сайте",
+    ["Корпоративный", "Обычный", "Подозрительный"]
+)
+
+AbnormalURL = safe_input(
+    "Аномальный URL",
+    ["Нет", "Иногда", "Да"]
+)
+
+WebsiteForwarding = safe_input(
+    "Перенаправления",
+    ["Нет", "Иногда", "Частые"]
+)
+
+StatusBarCust = safe_input(
+    "Изменение статус-бара",
+    ["Нет", "Иногда", "Да"]
+)
+
+DisableRightClick = safe_input(
+    "Отключён правый клик",
+    ["Нет", "Иногда", "Да"]
+)
+
+UsingPopupWindow = safe_input(
+    "Всплывающие окна",
+    ["Нет", "Иногда", "Часто"]
+)
+
+IframeRedirection = safe_input(
+    "Iframe редиректы",
+    ["Нет", "Иногда", "Да"]
+)
+
+AgeofDomain = safe_input(
+    "Возраст домена",
+    ["Старый домен", "Средний", "Новый домен (риск)"]
+)
+
+DNSRecording = safe_input(
+    "DNS записи",
+    ["Нормальные", "Сомнительные", "Плохие"]
+)
+
+WebsiteTraffic = safe_input(
+    "Трафик сайта",
+    ["Высокий", "Средний", "Низкий (подозрительно)"]
+)
+
+PageRank = safe_input(
+    "PageRank",
+    ["Высокий", "Средний", "Низкий"]
+)
+
+GoogleIndex = safe_input(
+    "Индексация Google",
+    ["В индексе", "Частично", "Нет в Google"]
+)
+
+LinksPointingToPage = safe_input(
+    "Входящие ссылки",
+    ["Много", "Средне", "Мало"]
+)
+
+StatsReport = safe_input(
+    "Статистические отчёты",
+    ["Чистые", "Сомнительные", "Плохие"]
+)
+
 
 # ===== DATAFRAME =====
 input_data = pd.DataFrame([[
-    1, UsingIP, LongURL, ShortURL, Symbol_at, Redirecting,
+    1,
+    UsingIP, LongURL, ShortURL, Symbol_at, Redirecting,
     PrefixSuffix, SubDomains, HTTPS, DomainRegLen, Favicon,
     NonStdPort, HTTPSDomainURL, RequestURL, AnchorURL,
     LinksInScriptTags, ServerFormHandler, InfoEmail, AbnormalURL,
@@ -181,18 +196,17 @@ input_data = pd.DataFrame([[
     StatsReport
 ]], columns=model.feature_names_in_)
 
-# ===== PREDICTION =====
+
+# ===== PREDICT =====
 if st.button("Проверить сайт"):
 
     pred = model.predict(input_data)[0]
     proba = model.predict_proba(input_data)[0]
-
-    st.subheader("Результат")
 
     if pred == -1:
         st.error("Фишинговый сайт")
     else:
         st.success("Безопасный сайт")
 
-    st.write(f"Вероятность безопасного сайта: {proba[1]*100:.2f}%")
-    st.write(f"Вероятность фишинга: {proba[0]*100:.2f}%")
+    st.write(f"Безопасность: {proba[1]*100:.2f}%")
+    st.write(f"Риск фишинга: {proba[0]*100:.2f}%")
