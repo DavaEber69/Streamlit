@@ -12,9 +12,9 @@ import pandas as pd
 import joblib
 
 # Загрузка модели
-model = joblib.load("phishing_model.pkl")
+model = joblib.load("Фишинговая.pkl")
 
-st.title("Phishing Website Detection")
+st.title("Проверка сайта на фишинг")
 
 st.write("Введите характеристики сайта")
 
