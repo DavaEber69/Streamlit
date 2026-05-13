@@ -18,43 +18,52 @@ st.title("Проверка сайта на фишинг")
 
 st.write("Введите характеристики сайта")
 
-# ===== INPUTS =====
-UsingIP = st.selectbox("Using IP", [-1, 1])
-LongURL = st.selectbox("Long URL", [-1, 1])
-ShortURL = st.selectbox("Short URL", [-1, 1])
-Symbol_at = st.selectbox("Symbol @", [-1, 1])
-Redirecting = st.selectbox("Redirecting //", [-1, 1])
-PrefixSuffix = st.selectbox("Prefix/Suffix", [-1, 1])
-SubDomains = st.selectbox("Sub Domains", [-1, 0, 1])
-HTTPS = st.selectbox("HTTPS", [-1, 1])
-DomainRegLen = st.selectbox("Domain Registration Length", [-1, 1])
-Favicon = st.selectbox("Favicon", [-1, 1])
+# ===== ФУНКЦИЯ ПЕРЕВОДА ДА/НЕТ В -1/1 =====
+def yes_no(label):
+    return st.selectbox(label, ["Нет", "Да"])
 
-NonStdPort = st.selectbox("Non Standard Port", [-1, 1])
-HTTPSDomainURL = st.selectbox("HTTPS in Domain URL", [-1, 1])
-RequestURL = st.selectbox("Request URL", [-1, 1])
-AnchorURL = st.selectbox("Anchor URL", [-1, 1])
-LinksInScriptTags = st.selectbox("Links in Script Tags", [-1, 1])
-ServerFormHandler = st.selectbox("Server Form Handler", [-1, 1])
-InfoEmail = st.selectbox("Info Email", [-1, 1])
-AbnormalURL = st.selectbox("Abnormal URL", [-1, 1])
-WebsiteForwarding = st.selectbox("Website Forwarding", [-1, 1])
-StatusBarCust = st.selectbox("Status Bar Custom", [-1, 1])
+def encode(value):
+    return 1 if value == "Да" else -1
 
-DisableRightClick = st.selectbox("Disable Right Click", [-1, 1])
-UsingPopupWindow = st.selectbox("Popup Window", [-1, 1])
-IframeRedirection = st.selectbox("Iframe Redirection", [-1, 1])
-AgeofDomain = st.selectbox("Age of Domain", [-1, 1])
-DNSRecording = st.selectbox("DNS Record", [-1, 1])
-WebsiteTraffic = st.selectbox("Website Traffic", [-1, 1])
-PageRank = st.selectbox("Page Rank", [-1, 1])
-GoogleIndex = st.selectbox("Google Index", [-1, 1])
-LinksPointingToPage = st.selectbox("Links Pointing to Page", [-1, 1])
-StatsReport = st.selectbox("Stats Report", [-1, 1])
 
-# ===== DataFrame (ВАЖНО: порядок как в датасете) =====
+# ===== INPUTS (РУССКИЙ ИНТЕРФЕЙС) =====
+UsingIP = encode(yes_no("Есть ли IP-адрес в URL?"))
+LongURL = encode(yes_no("Длинный URL?"))
+ShortURL = encode(yes_no("Используется сокращённый URL?"))
+Symbol_at = encode(yes_no("Есть символ @ в ссылке?"))
+Redirecting = encode(yes_no("Есть редиректы (//)?"))
+PrefixSuffix = encode(yes_no("Есть дефис в домене?"))
+SubDomains = st.selectbox("Количество поддоменов", [-1, 0, 1])
+HTTPS = encode(yes_no("Используется HTTPS?"))
+DomainRegLen = encode(yes_no("Короткий срок регистрации домена?"))
+Favicon = encode(yes_no("Подозрительный favicon?"))
+
+NonStdPort = encode(yes_no("Используется нестандартный порт?"))
+HTTPSDomainURL = encode(yes_no("HTTPS в домене?"))
+RequestURL = encode(yes_no("Запросы идут на внешний URL?"))
+AnchorURL = encode(yes_no("Подозрительные ссылки (anchor)?"))
+LinksInScriptTags = encode(yes_no("Подозрительные скрипты?"))
+ServerFormHandler = encode(yes_no("Подозрительный обработчик формы?"))
+InfoEmail = encode(yes_no("Есть email в URL?"))
+AbnormalURL = encode(yes_no("Аномальный URL?"))
+WebsiteForwarding = encode(yes_no("Перенаправления?"))
+StatusBarCust = encode(yes_no("Изменение статус-бара?"))
+
+DisableRightClick = encode(yes_no("Отключён правый клик?"))
+UsingPopupWindow = encode(yes_no("Используются pop-up окна?"))
+IframeRedirection = encode(yes_no("Используется iframe редирект?"))
+AgeofDomain = encode(yes_no("Домен молодой?"))
+DNSRecording = encode(yes_no("Проблемы с DNS?"))
+WebsiteTraffic = encode(yes_no("Низкий трафик сайта?"))
+PageRank = encode(yes_no("Низкий PageRank?"))
+GoogleIndex = encode(yes_no("Сайт не в Google?"))
+LinksPointingToPage = encode(yes_no("Мало входящих ссылок?"))
+StatsReport = encode(yes_no("Есть подозрения по статистике?"))
+
+
+# ===== DATAFRAME =====
 input_data = pd.DataFrame([[
-    1,  # Index (если модель его ждёт — иначе убери из обучения!)
+    1,
     UsingIP,
     LongURL,
     ShortURL,
@@ -96,11 +105,13 @@ input_data = pd.DataFrame([[
     "StatsReport"
 ])
 
+
 # ===== PREDICT =====
-if st.button("Check Website"):
+if st.button("Проверить сайт"):
+
     prediction = model.predict(input_data)
 
     if prediction[0] == -1:
-        st.error("Phishing Website Detected")
+        st.error("Обнаружен фишинговый сайт")
     else:
-        st.success("Website Looks Safe")
+        st.success("Сайт выглядит безопасным")
