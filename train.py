@@ -14,16 +14,11 @@ from sklearn.model_selection import train_test_split
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.metrics import accuracy_score
 
-# Загрузка датасета
 df = pd.read_csv("phishing.csv")
-
-# Целевая переменная
 y = df["class"]
 
-# Признаки
 X = df.drop("class", axis=1)
 
-# Деление выборки
 X_train, X_test, y_train, y_test = train_test_split(
     X,
     y,
@@ -31,19 +26,16 @@ X_train, X_test, y_train, y_test = train_test_split(
     random_state=42
 )
 
-# Обучение модели
 model = RandomForestClassifier(random_state=42)
 
 model.fit(X_train, y_train)
 
-# Проверка качества
 pred = model.predict(X_test)
 
 acc = accuracy_score(y_test, pred)
 
 print(f"Accuracy: {acc:.3f}")
 
-# Сохранение модели
 joblib.dump(model, "Фишинговая.pkl")
 
 print("Модель сохранена")
