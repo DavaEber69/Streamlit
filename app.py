@@ -11,20 +11,18 @@ import streamlit as st
 import pandas as pd
 import joblib
 
-# ===== MODEL =====
+
 model = joblib.load("Фишинговая.pkl")
 
 st.title("Проверка сайта на фишинг")
 
-st.write("Оцените характеристики сайта (чем больше подозрительных признаков — тем выше риск)")
-
-# ===== УНИВЕРСАЛЬНАЯ ФУНКЦИЯ =====
+st.write("Оцените характеристики сайта (чем больше подозрительных признаков — тем выше 
 def feature(label, options_map):
     choice = st.selectbox(label, list(options_map.keys()))
     return options_map[choice]
 
 
-# ===== ПРИЗНАКИ =====
+
 
 UsingIP = feature(
     "Используется IP-адрес вместо домена?",
@@ -146,7 +144,6 @@ LinksPointingToPage = feature("Входящие ссылки", {"Много": 1,
 StatsReport = feature("Статистические отчёты", {"Чистые": 1, "Сомнительные": 0, "Плохие": -1})
 
 
-# ===== DATAFRAME =====
 input_data = pd.DataFrame([[
     1,
     UsingIP, LongURL, ShortURL, Symbol_at, Redirecting,
@@ -160,7 +157,7 @@ input_data = pd.DataFrame([[
 ]], columns=model.feature_names_in_)
 
 
-# ===== PREDICT =====
+
 if st.button("Проверить сайт"):
 
     prediction = model.predict(input_data)[0]
